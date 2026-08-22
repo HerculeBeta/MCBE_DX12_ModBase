@@ -3,7 +3,7 @@
 A modular C++20 template for building internal DirectX 12 clients for Minecraft Bedrock Edition. Built on a clean event-driven architecture featuring an EnTT-based SDK, dynamic vtable hooking, ImGui DirectX 12 overlay rendering, Win32 input routing, and a JSON profile configuration system.
 
 > [!NOTE]
-> **Game Version & Compatibility**: Current signatures, vtable slots, and struct offsets are updated for Minecraft Bedrock **v1.26.40**.
+> **Game Version & Compatibility**: Current signatures, vtable slots, and struct offsets are updated for Minecraft Bedrock **v26.40**.
 > 
 > **Template Base**: This repository is designed as a foundational template/base. It may or may not receive continuous SDK expansions or updates for future game versions. You are completely free to expand, modify the code, integrate it into your own client, or fully rebrand it under the terms of the MIT License.
 
