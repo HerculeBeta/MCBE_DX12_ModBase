@@ -1,0 +1,79 @@
+project(libhat_tests)
+
+if (NOT CPM_SOURCE_CACHE AND NOT ENV{CPM_SOURCE_CACHE})
+    set(CPM_SOURCE_CACHE ${PROJECT_SOURCE_DIR}/.cpmcache)
+endif()
+
+include(cmake/get_cpm.cmake)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
+CPMAddPackage("gh:google/googletest#v1.17.0")
+CPMAddPackage("gh:google/benchmark#v1.9.5")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 21)
+    target_compile_options(gtest PRIVATE "-Wno-character-conversion")
+endif()
+
+if(LIBHAT_TESTING_SDE)
+    set(LIBHAT_SETUP_SDE OFF)
+    if(WIN32)
+        CPMAddPackage(
+            NAME            intel_sde
+            URL             https://github.com/BasedInc/sde/releases/download/v9.58.0/sde-external-9.58.0-2025-06-16-win.tar.xz
+            URL_HASH        SHA256=EBB8B3B63FCB0B6C1F9721118BA4883703D2AED9E0DB2DEFED4E44FBA78D9CA9
+            DOWNLOAD_ONLY   TRUE
+        )
+        set(LIBHAT_SETUP_SDE ON)
+        set(LIBHAT_SDE_EXECUTABLE sde.exe)
+    elseif(UNIX)
+        CPMAddPackage(
+            NAME            intel_sde
+            URL             https://github.com/BasedInc/sde/releases/download/v9.58.0/sde-external-9.58.0-2025-06-16-lin.tar.xz
+            URL_HASH        SHA256=F849ACECAD4C9B108259C643B2688FD65C35723CD23368ABE5DD64B917CC18C0
+            DOWNLOAD_ONLY   TRUE
+        )
+        set(LIBHAT_SETUP_SDE ON)
+        set(LIBHAT_SDE_EXECUTABLE sde64)
+    else()
+        message("Intel SDE not supported by host platform, testing support may be limited" WARNING)
+    endif()
+    if(LIBHAT_SETUP_SDE)
+        set(LIBHAT_TEST_COMMAND_PREFIX
+            ${intel_sde_SOURCE_DIR}/${LIBHAT_SDE_EXECUTABLE}
+            -gnr # Supports AVX512 emulation
+            --
+        )
+    endif()
+endif()
+
+function(register_test NAME SOURCE)
+    add_executable(${NAME} ${SOURCE})
+    target_link_libraries(${NAME} PRIVATE gtest gtest_main benchmark libhat)
+    add_test(NAME ${NAME} COMMAND ${LIBHAT_TEST_COMMAND_PREFIX} $<TARGET_FILE:${NAME}> --benchmark_counters_tabular=true)
+endfunction()
+
+register_test(libhat_benchmark_compare benchmark/Compare.cpp)
+register_test(libhat_benchmark_compare_impl benchmark/CompareImpl.cpp)
+register_test(libhat_test_scanner tests/Scanner.cpp)
+register_test(libhat_test_process tests/Process.cpp)
+
+if(LIBHAT_TESTING_SAMPLE_BIN)
+    CPMAddPackage(
+        NAME            chromium_win_x64
+        URL             https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Win_x64%2F1533392%2Fchrome-win.zip?generation=1761109878458576&alt=media
+        URL_HASH        SHA256=C53AC5F55C8EC6CD61E90D3D50DB7AF05D17708EBCD3141E0008CBE2F82DF5BF
+        DOWNLOAD_ONLY   TRUE
+    )
+    register_test(libhat_benchmark_chromium benchmark/Chromium.cpp)
+    set(CHROME_DLL_PATH "${chromium_win_x64_SOURCE_DIR}/chrome.dll")
+    target_compile_definitions(libhat_benchmark_chromium PRIVATE CHROME_DLL_PATH=${CHROME_DLL_PATH})
+endif()
+
+add_executable(libhat_hwinfo info/HardwareInfo.cpp)
+target_link_libraries(libhat_hwinfo PRIVATE libhat)

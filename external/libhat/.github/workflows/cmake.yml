@@ -1,0 +1,179 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  macos:
+    strategy:
+      matrix:
+        cxx_standard: [ 20, 23 ]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: CPM Cache
+        uses: actions/cache@v5
+        with:
+          path: ${{github.workspace}}/.cpmcache
+          key: cpm-${{runner.os}}-${{hashFiles('test/CMakeLists.txt')}}
+          restore-keys: |
+            cpm-${{runner.os}}-
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCPM_SOURCE_CACHE=${{github.workspace}}/.cpmcache -DCMAKE_CXX_STANDARD=${{matrix.cxx_standard}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING_SAMPLE_BIN=OFF -DLIBHAT_TESTING_SDE=OFF
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest --verbose -C ${{env.BUILD_TYPE}} -R libhat_test_.*
+
+  linux:
+    strategy:
+      matrix:
+        target: [ x64, ARM64 ]
+        cxx_standard: [ 20, 23 ]
+        compiler:
+          - { pkg: g++, exe: g++, version: 14 }
+          - { pkg: clang, exe: clang++, version: 18 }
+        include:
+          - target: x64
+            os: ubuntu-26.04
+          - target: ARM64
+            os: ubuntu-26.04-arm
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: CPM Cache
+        uses: actions/cache@v5
+        with:
+          path: ${{github.workspace}}/.cpmcache
+          key: cpm-${{runner.os}}-${{hashFiles('test/CMakeLists.txt')}}
+          restore-keys: |
+            cpm-${{runner.os}}-
+
+      - name: Install Compiler
+        run: |
+          sudo apt update
+          sudo apt install -y ${{matrix.compiler.pkg}}-${{matrix.compiler.version}}
+
+      - name: Configure
+        env:
+          CXX: ${{matrix.compiler.exe}}-${{matrix.compiler.version}}
+        run: cmake -B ${{github.workspace}}/build -DCPM_SOURCE_CACHE=${{github.workspace}}/.cpmcache -DCMAKE_CXX_STANDARD=${{matrix.cxx_standard}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING_SDE=${{startsWith(matrix.target, 'ARM') && 'OFF' || 'ON'}} -DLIBHAT_TESTING_SAMPLE_BIN=OFF -DLIBHAT_TESTING_SANITIZE=OFF
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        run: ctest --verbose -C ${{env.BUILD_TYPE}} -R libhat_test_.*
+
+  android:
+    strategy:
+      matrix:
+        cxx_standard: [ 20 ]
+        abi: [ armeabi-v7a, arm64-v8a, x86, x86_64 ]
+        sdk: [ 24 ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: AVD Cache
+        if: ${{!startsWith(matrix.abi, 'arm')}}
+        uses: actions/cache@v5
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{matrix.sdk}}-${{matrix.abi}}
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=${{matrix.abi}} -DANDROID_PLATFORM=${{matrix.sdk}} -DCPM_SOURCE_CACHE=${{github.workspace}}/.cpmcache -DCMAKE_CXX_STANDARD=${{matrix.cxx_standard}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_TESTING_SAMPLE_BIN=OFF -DLIBHAT_TESTING_SDE=OFF -DLIBHAT_TESTING_SANITIZE=OFF
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      - name: Create AVD and generate snapshot for caching
+        if: ${{!startsWith(matrix.abi, 'arm') && steps.avd-cache.outputs.cache-hit != 'true'}}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{matrix.sdk}}
+          arch: ${{matrix.abi}}
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: Test
+        if: ${{!startsWith(matrix.abi, 'arm')}}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{matrix.sdk}}
+          arch: ${{matrix.abi}}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            adb push ${{github.workspace}}/build/test /data/local/tmp/
+            adb shell chmod +x /data/local/tmp/test/libhat_test_process
+            adb shell /data/local/tmp/test/libhat_test_process
+
+  windows:
+    strategy:
+      matrix:
+        target: [ Win32, x64, ARM64 ]
+        toolset: [ v145, ClangCL ]
+        cxx_standard: [ 20, 23 ]
+        include:
+          - target: Win32
+            vcvars: vcvars32
+            os: windows-2025-vs2026
+          - target: x64
+            vcvars: vcvars64
+            os: windows-2025-vs2026
+          - target: ARM64
+            vcvars: vcvarsarm64
+            os: windows-11-vs2026-arm
+        exclude:
+          - toolset: ClangCL
+            target: ARM64
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: CPM Cache
+        uses: actions/cache@v5
+        with:
+          path: ${{github.workspace}}/.cpmcache
+          key: cpm-${{runner.os}}-${{matrix.target}}-${{hashFiles('test/CMakeLists.txt')}}
+          restore-keys: |
+            cpm-${{runner.os}}-${{matrix.target}}-
+
+      - name: Locate Visual Studio
+        run: |
+          $vsInstall = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          echo "VS_INSTALL_DIR=$vsInstall" >> $env:GITHUB_ENV
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCPM_SOURCE_CACHE=${{github.workspace}}/.cpmcache -DCMAKE_CXX_STANDARD=${{matrix.cxx_standard}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBHAT_SHARED_C_LIB=ON -DLIBHAT_TESTING_SDE=${{startsWith(matrix.target, 'ARM') && 'OFF' || 'ON'}} -DLIBHAT_TESTING_SAMPLE_BIN=OFF -A ${{matrix.target}} -T ${{matrix.toolset}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build -j 4
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        shell: cmd
+        run: |
+          call "${{env.VS_INSTALL_DIR}}\VC\Auxiliary\Build\${{matrix.vcvars}}.bat"
+          ctest --verbose -C ${{env.BUILD_TYPE}} -R libhat_test_.*
