@@ -4,6 +4,7 @@
 #include "minecraft/hooks/attack_hook.h"
 #include "minecraft/hooks/hook_memory.h"
 #include "minecraft/bedrock_memory.h"
+#include "minecraft/sdk/client/client_instance.h"
 #include "events/event_bus.h"
 #include "events/client_instance_update_event.h"
 #include "utils/logger.h"
@@ -23,6 +24,7 @@ namespace minecraft::hooks {
                 event.clientInstance);
 
             if (localPlayer) {
+                ClientInstance::setLocalPlayer(static_cast<LocalPlayer*>(localPlayer));
                 install_actor_tick_hook(localPlayer, event.clientInstance);
                 install_attack_hook(static_cast<LocalPlayer*>(localPlayer));
             }
@@ -71,6 +73,7 @@ namespace minecraft::hooks {
 
     void shutdown() {
         LOG_INFO("Shutting down game hooks...");
+        ClientInstance::setLocalPlayer(nullptr);
         remove_attack_hook();
         remove_actor_tick_hook();
         remove_client_instance_hook();

@@ -28,6 +28,7 @@ namespace {
         void* clientInst = g_currentClientInstance.load(std::memory_order_acquire);
 
         if (self != nullptr && expectedPlayer != nullptr && self == expectedPlayer && clientInst != nullptr) {
+            ClientInstance::setLocalPlayer(static_cast<LocalPlayer*>(self));
             ActorTickEvent event(static_cast<ClientInstance*>(clientInst), static_cast<LocalPlayer*>(self));
             EventBus::instance().publish(event);
         }
@@ -64,6 +65,7 @@ namespace minecraft::hooks {
     void remove_actor_tick_hook() {
         std::lock_guard<std::mutex> lock(g_hookMutex);
 
+        ClientInstance::setLocalPlayer(nullptr);
         g_currentLocalPlayer.store(nullptr, std::memory_order_release);
         g_currentClientInstance.store(nullptr, std::memory_order_release);
 

@@ -51,6 +51,7 @@ namespace minecraft::hooks {
 
     void remove_client_instance_hook() {
         ClientInstance::set(nullptr);
+        ClientInstance::setLocalPlayer(nullptr);
         if (g_clientUpdateTarget) {
             MH_DisableHook(g_clientUpdateTarget);
             MH_RemoveHook(g_clientUpdateTarget);

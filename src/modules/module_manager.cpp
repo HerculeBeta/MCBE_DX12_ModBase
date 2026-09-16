@@ -20,6 +20,7 @@ void ModuleManager::initialize() {
     m_modules.push_back(std::make_unique<Jetpack>());
     m_modules.push_back(std::make_unique<Fly>());
     m_modules.push_back(std::make_unique<ArrayList>());
+    m_modules.push_back(std::make_unique<ESP>());
     m_modules.push_back(std::make_unique<Killaura>());
 
     rebuild_categories();

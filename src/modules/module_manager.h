@@ -13,6 +13,7 @@
 #include "modules/movement/Jetpack.h"
 #include "modules/movement/Fly.h"
 #include "modules/visual/Arraylist.h"
+#include "modules/visual/ESP.h"
 #include "modules/combat/Killaura.h"
 
 

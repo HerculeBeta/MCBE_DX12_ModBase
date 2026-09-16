@@ -1,6 +1,5 @@
 #include "minecraft/sdk/client/client_instance.h"
 
-#include <imgui.h>
 #include <cmath>
 
 bool ClientInstance::world_to_screen(const math::Vec3& worldPos, math::Vec2& screenPos) const {
@@ -12,6 +11,9 @@ bool ClientInstance::world_to_screen(const math::Vec3& worldPos, math::Vec2& scr
 
         LevelRendererPlayer* rp = lr->getLevelRendererPlayer();
         if (!rp) return false;
+
+        GuiData* gui = getGuiData();
+        if (!gui) return false;
 
         const math::Vec3 origin = rp->getOrigin();
         const math::Vec3 rel = worldPos - origin;
@@ -28,19 +30,7 @@ bool ClientInstance::world_to_screen(const math::Vec3& worldPos, math::Vec2& scr
             return false;
         }
 
-        math::Vec2 screenSize{};
-        if (GuiData* gui = getGuiData()) {
-            screenSize = gui->getWindowSize();
-        }
-        if (screenSize.x <= 0.0f || screenSize.y <= 0.0f) {
-            const ImVec2 display = ImGui::GetIO().DisplaySize;
-            screenSize = { display.x, display.y };
-        }
-
-        if (screenSize.x <= 0.0f || screenSize.y <= 0.0f) {
-            return false;
-        }
-
+        const math::Vec2 screenSize = gui->getWindowSize();
         const float halfW = screenSize.x * 0.5f;
         const float halfH = screenSize.y * 0.5f;
         const float fovX = rp->getFovX();

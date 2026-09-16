@@ -88,6 +88,14 @@ public:
         s_instance.store(instance, std::memory_order_release);
     }
 
+    static LocalPlayer* getLocalPlayer() {
+        return s_localPlayer.load(std::memory_order_acquire);
+    }
+
+    static void setLocalPlayer(LocalPlayer* player) {
+        s_localPlayer.store(player, std::memory_order_release);
+    }
+
     [[nodiscard]] LevelRenderer* getLevelRenderer() const {
         if (!this) return nullptr;
         __try {
@@ -128,4 +136,5 @@ public:
 
 private:
     static inline std::atomic<ClientInstance*> s_instance{ nullptr };
+    static inline std::atomic<LocalPlayer*> s_localPlayer{ nullptr };
 };

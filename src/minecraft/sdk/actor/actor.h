@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/math.h"
+#include "utils/memory_utils.h"
 #include <cstdint>
 #include <vector>
 
@@ -159,17 +160,17 @@ public:
 
     [[nodiscard]] static std::vector<Actor*> get_all(Actor* referenceActor) {
         std::vector<Actor*> actors;
-        if (!referenceActor) return actors;
+        if (!utils::memory::is_valid_ptr(referenceActor)) return actors;
 
         EntityContext* context = referenceActor->getEntityContext();
-        if (!context || !context->mRegistry) return actors;
+        if (!utils::memory::is_valid_ptr(context) || !utils::memory::is_valid_ptr(context->mRegistry)) return actors;
 
         auto& registry = context->getRegistry();
         auto view = registry.view<ActorOwnerComponent>();
 
         for (auto entity : view) {
             auto* owner = registry.try_get<ActorOwnerComponent>(entity);
-            if (owner && owner->mActor) {
+            if (owner && utils::memory::is_valid_ptr(owner->mActor)) {
                 actors.push_back(owner->mActor);
             }
         }
