@@ -57,6 +57,7 @@ MCBE_DX12_ModBase/
 │   │   │   └── client_instance_hook.h
 │   │   └── sdk/                # Reverse-engineered game classes & EnTT ECS
 │   │       ├── actor/          # Actor, LocalPlayer, GameMode
+│   │       ├── client/         # ClientInstance, LevelRenderer, GuiData, GLMatrix
 │   │       ├── components/     # StateVector, Rotation, AABB, etc.
 │   │       └── entity/         # EntityContext, EntityId, EnTT integration
 │   │
@@ -64,9 +65,9 @@ MCBE_DX12_ModBase/
 │   │   ├── module.h / .cpp     # Module base class
 │   │   ├── module_manager.h    # Module registry and category manager
 │   │   ├── combat/             # Combat modules (e.g. Killaura)
-│   │   ├── movement/           # Movement modules (e.g. Jetpack)
+│   │   ├── movement/           # Movement modules (e.g. Jetpack, Fly)
 │   │   ├── player/             # Player utility modules
-│   │   └── visual/             # Render & HUD modules (e.g. Arraylist)
+│   │   └── visual/             # Render & HUD modules (e.g. Arraylist, ESP)
 │   │
 │   ├── platform/windows/       # DLL entry point (DllMain) and uninject thread
 │   │
@@ -236,6 +237,22 @@ Define patterns in `src/minecraft/bedrock_memory.h` and scan with `libhat`:
 const std::uintptr_t addr = hook_memory::resolve_signature("FunctionName", "48 89 5C 24 ? 57 48 83 EC");
 ```
 
+---
+
+### 5. Screen Projection (WorldToScreen)
+
+Visual modules rendering in `on_imgui_render()` can project 3D coordinates to 2D screen positions via `ClientInstance`:
+
+```cpp
+#include "minecraft/sdk/client/client_instance.h"
+
+math::Vec2 screen;
+if (ClientInstance::get()->world_to_screen(worldPos, screen)) {
+    // Render 2D overlays at (screen.x, screen.y)
+    ImGui::GetBackgroundDrawList()->AddCircleFilled(
+        ImVec2(screen.x, screen.y), 3.0f, IM_COL32(255, 255, 255, 255));
+}
+```
 
 ---
 
