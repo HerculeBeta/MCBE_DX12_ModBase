@@ -11,6 +11,7 @@
 
 // include module headers here
 #include "modules/movement/Jetpack.h"
+#include "modules/movement/Fly.h"
 #include "modules/visual/Arraylist.h"
 #include "modules/combat/Killaura.h"
 

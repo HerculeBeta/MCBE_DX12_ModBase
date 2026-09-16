@@ -18,6 +18,7 @@ void ModuleManager::initialize() {
     LOG_INFO("Initializing ModuleManager...");
 
     m_modules.push_back(std::make_unique<Jetpack>());
+    m_modules.push_back(std::make_unique<Fly>());
     m_modules.push_back(std::make_unique<ArrayList>());
     m_modules.push_back(std::make_unique<Killaura>());
 

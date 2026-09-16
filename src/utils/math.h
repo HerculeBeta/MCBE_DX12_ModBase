@@ -9,10 +9,21 @@ namespace math {
         float x = 0.0f, y = 0.0f;
 
         Vec2 operator*(float s) const { return { x * s, y * s }; }
+        Vec2 operator/(float s) const { return s != 0.0f ? Vec2{ x / s, y / s } : Vec2{}; }
         Vec2 operator+(const Vec2& o) const { return { x + o.x, y + o.y }; }
         Vec2 operator-(const Vec2& o) const { return { x - o.x, y - o.y }; }
+        Vec2& operator+=(const Vec2& o) { x += o.x; y += o.y; return *this; }
+        Vec2& operator-=(const Vec2& o) { x -= o.x; y -= o.y; return *this; }
+        Vec2& operator*=(float s) { x *= s; y *= s; return *this; }
+
         float length() const { return std::sqrt(x * x + y * y); }
         float length_sq() const { return x * x + y * y; }
+        float magnitude() const { return length(); }
+
+        Vec2 normalized() const {
+            const float len = length();
+            return len > 0.0001f ? *this / len : Vec2{};
+        }
 
         float distance(const Vec2& o) const { return (*this - o).length(); }
         float distance_sq(const Vec2& o) const { return (*this - o).length_sq(); }
@@ -22,10 +33,21 @@ namespace math {
         float x = 0.0f, y = 0.0f, z = 0.0f;
 
         Vec3 operator*(float s) const { return { x * s, y * s, z * s }; }
+        Vec3 operator/(float s) const { return s != 0.0f ? Vec3{ x / s, y / s, z / s } : Vec3{}; }
         Vec3 operator+(const Vec3& o) const { return { x + o.x, y + o.y, z + o.z }; }
         Vec3 operator-(const Vec3& o) const { return { x - o.x, y - o.y, z - o.z }; }
+        Vec3& operator+=(const Vec3& o) { x += o.x; y += o.y; z += o.z; return *this; }
+        Vec3& operator-=(const Vec3& o) { x -= o.x; y -= o.y; z -= o.z; return *this; }
+        Vec3& operator*=(float s) { x *= s; y *= s; z *= s; return *this; }
+
         float length() const { return std::sqrt(x * x + y * y + z * z); }
         float length_sq() const { return x * x + y * y + z * z; }
+        float magnitude() const { return length(); }
+
+        Vec3 normalized() const {
+            const float len = length();
+            return len > 0.0001f ? *this / len : Vec3{};
+        }
 
         float distance(const Vec3& o) const { return (*this - o).length(); }
         float distance_sq(const Vec3& o) const { return (*this - o).length_sq(); }
@@ -46,6 +68,12 @@ namespace math {
             -std::sin(pitchRad),
              std::cos(yawRad) * cosPitch
         };
+    }
+
+    inline void get_horizontal_vectors(float yaw, Vec3& forward, Vec3& right) {
+        const float yawRad = yaw * (kPi / 180.0f);
+        forward = { -std::sin(yawRad), 0.0f, std::cos(yawRad) };
+        right = { -forward.z, 0.0f, forward.x };
     }
 }
 

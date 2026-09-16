@@ -1,0 +1,32 @@
+# Build and Output Directories
+/build/
+/build-*/
+/out/
+/x64/
+/x86/
+
+# Visual Studio & IDE files
+/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Generated compiler / linker intermediate files
+*.ilk
+*.exp
+*.pdb
+*.tlog
+*.idb
+*.log
+
+# CMake artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake.in
+*.stamp
