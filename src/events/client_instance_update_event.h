@@ -2,11 +2,13 @@
 
 #include "events/event.h"
 
+class ClientInstance;
+
 struct ClientInstanceUpdateEvent : public Event {
-    void* clientInstance = nullptr;
+    ClientInstance* clientInstance = nullptr;
     bool isInitFinished = false;
 
-    ClientInstanceUpdateEvent(void* instance, bool initFinished)
+    ClientInstanceUpdateEvent(ClientInstance* instance, bool initFinished)
         : clientInstance(instance), isInitFinished(initFinished) {
     }
 };

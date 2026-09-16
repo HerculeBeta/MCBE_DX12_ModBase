@@ -1,4 +1,5 @@
 #include "minecraft/hooks/client_instance_hook.h"
+#include "minecraft/sdk/client/client_instance.h"
 #include "events/event_bus.h"
 #include "events/client_instance_update_event.h"
 #include "utils/logger.h"
@@ -11,7 +12,12 @@ namespace {
     void* g_clientUpdateTarget = nullptr;
 
     bool __fastcall hook_client_instance_update(void* self, bool isInitFinished) {
-        ClientInstanceUpdateEvent event(self, isInitFinished);
+        auto* instance = static_cast<ClientInstance*>(self);
+        if (instance) {
+            ClientInstance::set(instance);
+        }
+
+        ClientInstanceUpdateEvent event(instance, isInitFinished);
         EventBus::instance().publish(event);
 
         return g_originalClientUpdate ? g_originalClientUpdate(self, isInitFinished) : false;
@@ -44,6 +50,7 @@ namespace minecraft::hooks {
     }
 
     void remove_client_instance_hook() {
+        ClientInstance::set(nullptr);
         if (g_clientUpdateTarget) {
             MH_DisableHook(g_clientUpdateTarget);
             MH_RemoveHook(g_clientUpdateTarget);

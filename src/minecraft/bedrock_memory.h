@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace minecraft {
 
     struct BedrockVtableSlots {
@@ -8,6 +10,14 @@ namespace minecraft {
 
     struct BedrockOffsets {
         static constexpr std::uintptr_t localPlayer_gameMode = 0xAA0; //26.40
+        static constexpr std::uintptr_t clientInstance_levelRenderer = 0x1B8; //26.40
+        static constexpr std::uintptr_t clientInstance_glMatrix = 0x418; //26.40
+        static constexpr std::uintptr_t clientInstance_guiData = 0x648; //26.40
+        static constexpr std::uintptr_t levelRenderer_renderPlayer = 0x468; //26.40
+        static constexpr std::uintptr_t renderPlayer_cameraPos = 0x660; //26.40
+        static constexpr std::uintptr_t renderPlayer_fovX = 0xF58; //26.40
+        static constexpr std::uintptr_t renderPlayer_fovY = 0xF6C; //26.40
+        static constexpr std::uintptr_t guiData_windowSize = 0x40; //26.40
     };
 
     struct BedrockSignatures {

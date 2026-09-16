@@ -1,4 +1,5 @@
 #include "minecraft/hooks/actor_tick_hook.h"
+#include "minecraft/sdk/client/client_instance.h"
 #include "events/event_bus.h"
 #include "events/actor_tick_event.h"
 #include "minecraft/sdk/actor/local_player.h"
@@ -27,7 +28,7 @@ namespace {
         void* clientInst = g_currentClientInstance.load(std::memory_order_acquire);
 
         if (self != nullptr && expectedPlayer != nullptr && self == expectedPlayer && clientInst != nullptr) {
-            ActorTickEvent event(clientInst, static_cast<LocalPlayer*>(self));
+            ActorTickEvent event(static_cast<ClientInstance*>(clientInst), static_cast<LocalPlayer*>(self));
             EventBus::instance().publish(event);
         }
     }

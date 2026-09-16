@@ -2,13 +2,14 @@
 
 #include "events/event.h"
 
+class ClientInstance;
 class LocalPlayer;
 
 struct ActorTickEvent : public Event {
-    void* clientInstance = nullptr;
+    ClientInstance* clientInstance = nullptr;
     LocalPlayer* localPlayer = nullptr;
 
-    ActorTickEvent(void* instance, LocalPlayer* player)
+    ActorTickEvent(ClientInstance* instance, LocalPlayer* player)
         : clientInstance(instance), localPlayer(player) {
     }
 };
